@@ -24,4 +24,40 @@ app.post('/login', async (req, res) => {
       username: username,
       password: password
     });
-    console.log('Sending to Moloni:', params.toString().replace
+    console.log('Sending to Moloni:', params.toString().replace(password, '***'));
+    const r = await fetch('https://api.moloni.pt/v1/grant/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+    const data = await r.json();
+    console.log('Moloni response:', JSON.stringify(data));
+    res.json(data);
+  } catch(e) {
+    console.log('Error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api', async (req, res) => {
+  const { endpoint, method, body } = req.body || {};
+  if (!endpoint || !endpoint.startsWith('https://api.moloni.pt/v1/')) {
+    return res.status(400).json({ error: 'Invalid endpoint' });
+  }
+  try {
+    const opts = { method: method || 'GET', headers: {} };
+    if (body) {
+      opts.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      opts.body = body;
+    }
+    const r = await fetch(endpoint, opts);
+    res.json(await r.json());
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/', (req, res) => res.json({ status: 'ok', version: '2' }));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('Server v2 running on port ' + PORT));
