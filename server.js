@@ -31,10 +31,16 @@ app.post('/login', async (req, res) => {
     });
     console.log('Sending to Moloni:', params.toString().replace(password, '***'));
     const r = await fetch('https://api.moloni.pt/v1/grant', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString()
-    });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    grant_type: 'password',
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    username: username,
+    password: password
+  })
+});
     const data = await r.json();
     console.log('Moloni response:', JSON.stringify(data));
     res.json(data);
