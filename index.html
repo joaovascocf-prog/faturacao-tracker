@@ -447,18 +447,24 @@ async function loadMoloniInvoices() {
     const y = year.toString(), m = MNUMS[monthIdx];
 
     data.forEach(function(inv) {
-      // Only current month
-      if (inv.date && !inv.date.startsWith(y + "-" + m)) return;
-      const notes = (inv.notes || "").trim();
+      // Handle multiple date formats: YYYY-MM-DD or DD-MM-YYYY
+      if (inv.date) {
+        const d = inv.date;
+        const matchesMonth = d.startsWith(y + "-" + m) ||
+          d.endsWith("-" + m + "-" + y) ||
+          d.includes("/" + m + "/" + y);
+        if (!matchesMonth) return;
+      }
+      // Try multiple field names for observations
+      const notes = (inv.notes || inv.obs || inv.observations || inv.note || "").trim();
       if (!notes) return;
       // Find digits in notes
       const matches = notes.match(/\d{7,9}/g);
       if (!matches) return;
       matches.forEach(function(code) {
-        // Find a folder that starts with this code
         folders.forEach(function(f) {
           if (f.startsWith(code)) {
-            const serie = inv.document_set_name || "";
+            const serie = inv.document_set_name || inv.serie || "";
             const num = serie ? serie + "/" + (inv.number || "?") : (inv.number || inv.document_id || "?");
             invoiceMap[f] = "Fatura " + num;
           }
