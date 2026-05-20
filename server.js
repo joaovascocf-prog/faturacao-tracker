@@ -30,7 +30,7 @@ app.post('/login', async (req, res) => {
       password: password
     });
     console.log('Sending to Moloni:', params.toString().replace(password, '***'));
-    const r = await fetch('https://api.moloni.pt/v1/grant/', {
+    const r = await fetch('https://api.moloni.pt/v1/grant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString()
