@@ -1,21 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-
+ 
 const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
-
+ 
 const CLIENT_ID = 'clvhslda';
 const CLIENT_SECRET = '1afdfa6ff107c5fd7361224305bcc209b26bb54e';
 const REDIRECT_URI = 'https://faturacao-tracker.onrender.com/moloni-callback';
-
+ 
 let moloniTokens = { access_token: null, refresh_token: null, expires_at: 0 };
-
+ 
 // Serve HTML
 app.use(express.static(path.join(__dirname)));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-
+ 
 // Start Moloni OAuth
 app.get('/moloni-auth', (req, res) => {
   const url = 'https://api.moloni.pt/v1/authorize' +
@@ -23,11 +23,14 @@ app.get('/moloni-auth', (req, res) => {
     '&redirect_uri=' + encodeURIComponent(REDIRECT_URI);
   res.redirect(url);
 });
-
+ 
 // Handle Moloni callback
 app.get('/moloni-callback', async (req, res) => {
+  console.log('Callback params:', JSON.stringify(req.query));
   const code = req.query.code;
-  if (!code) return res.send('<h2>Erro: sem código</h2>');
+  if (!code) {
+    return res.send('<h2>Params recebidos: ' + JSON.stringify(req.query) + '</h2>');
+  }
   try {
     const body = 'grant_type=authorization_code&client_id=' + CLIENT_ID +
       '&client_secret=' + CLIENT_SECRET + '&code=' + code +
@@ -38,7 +41,7 @@ app.get('/moloni-callback', async (req, res) => {
       body
     });
     const data = await r.json();
-    console.log('Moloni callback:', JSON.stringify(data));
+    console.log('Moloni callback response:', JSON.stringify(data));
     if (data.access_token) {
       moloniTokens = {
         access_token: data.access_token,
@@ -53,7 +56,7 @@ app.get('/moloni-callback', async (req, res) => {
     res.send('<h2>Erro: ' + e.message + '</h2>');
   }
 });
-
+ 
 async function getToken() {
   if (moloniTokens.access_token && Date.now() < moloniTokens.expires_at) return moloniTokens.access_token;
   if (!moloniTokens.refresh_token) throw new Error('not_authenticated');
@@ -71,12 +74,12 @@ async function getToken() {
   };
   return moloniTokens.access_token;
 }
-
+ 
 app.get('/moloni-status', async (req, res) => {
   try { await getToken(); res.json({ connected: true }); }
   catch { res.json({ connected: false }); }
 });
-
+ 
 app.get('/moloni-companies', async (req, res) => {
   try {
     const tok = await getToken();
@@ -84,7 +87,7 @@ app.get('/moloni-companies', async (req, res) => {
     res.json(await r.json());
   } catch(e) { res.status(401).json({ error: e.message }); }
 });
-
+ 
 app.get('/moloni-invoices', async (req, res) => {
   try {
     const tok = await getToken();
@@ -93,6 +96,6 @@ app.get('/moloni-invoices', async (req, res) => {
     res.json(await r.json());
   } catch(e) { res.status(401).json({ error: e.message }); }
 });
-
+ 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server v6 running on port ' + PORT));
+app.listen(PORT, () => console.log('Server v7 running on port ' + PORT));
