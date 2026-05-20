@@ -29,9 +29,9 @@ app.get('/moloni-callback', async (req, res) => {
     return res.send('<h2>Params: ' + JSON.stringify(req.query) + '</h2>');
   }
   try {
-    // Try with URLSearchParams and trailing slash
+    // Moloni uses response_type=token for code exchange
     const bodyParams = new URLSearchParams({
-      grant_type: 'authorization_code',
+      response_type: 'token',
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       code: code,
@@ -43,8 +43,10 @@ app.get('/moloni-callback', async (req, res) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: bodyParams.toString()
     });
-    const data = await r.json();
-    console.log('Grant response:', JSON.stringify(data));
+    const text = await r.text();
+    console.log('Grant response raw:', text.substring(0, 200));
+    let data;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
     if (data.access_token) {
       moloniTokens = {
         access_token: data.access_token,
@@ -107,4 +109,4 @@ app.get('/moloni-invoices', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server v8 running on port ' + PORT));
+app.listen(PORT, () => console.log('Server v9 running on port ' + PORT));
