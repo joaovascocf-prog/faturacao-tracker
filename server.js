@@ -1,6 +1,7 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors({ origin: '*' }));
@@ -9,11 +10,15 @@ app.use(express.json());
 const CLIENT_ID = 'clvhslda';
 const CLIENT_SECRET = '1afdfa6ff107c5fd7361224305bcc209b26bb54e';
 
+// Serve the HTML app
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.post('/login', async (req, res) => {
   console.log('LOGIN REQUEST body:', JSON.stringify(req.body));
   const { username, password } = req.body || {};
   if (!username || !password) {
-    console.log('Missing credentials!');
     return res.status(400).json({ error: 'Missing credentials', received: req.body });
   }
   try {
@@ -34,7 +39,6 @@ app.post('/login', async (req, res) => {
     console.log('Moloni response:', JSON.stringify(data));
     res.json(data);
   } catch(e) {
-    console.log('Error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -57,7 +61,5 @@ app.post('/api', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => res.json({ status: 'ok', version: '2' }));
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server v2 running on port ' + PORT));
+app.listen(PORT, () => console.log('Server v3 running on port ' + PORT));
